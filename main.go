@@ -4,46 +4,65 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/bbruun/galt/common"
-	"github.com/bbruun/galt/core"
+	"log"
+	"net"
+
+	"github.com/bbruun/galt/config"
+	"github.com/bbruun/galt/initializers"
+	"google.golang.org/grpc"
 )
 
-const (
-	VERSION string = "0.0.1"
-	AUTHOR  string = "Bjarke Bruun"
-)
+var VERSION string = "(development build)"
+var AUTHOR string = "Bjarke Bruun - https://github.com/bbruun"
+var PORT string = ":4505"
 
 var IS_MASTER bool
 
 func init() {
-	/*
-		Read command line parameters
-	*/
+	fmt.Println("setting up config.Config")
+	config.NewConfig("./config/galt.yaml")
+	fmt.Printf("config.Config set up: %+v\n", config.Config)
+	fmt.Printf("Listen address: %s\n", config.Config.GetListenAddress())
+	// Parse command line parameters
+	initializers.ParseFlags()
 
-	// Am I a master or minion
+	// Load/override loaded configuration
+	initializers.LoadEnvVariables()
 
+	// Read default configuration file or specified configuration file
+	config.NewConfig(initializers.ConfigFileLocation)
+	config.Config.UpdateConfigFromEnvVars()
+
+	// Connect to database and migrate/update it
+	initializers.ConnectToDB()
+	initializers.SyncDatabase()
 }
 
 func main() {
-	log := common.ReturnLogger()
-	log.Debug("Starting PowerDNS CLI version 0.0.1")
+	fmt.Printf("Galt %s\n", VERSION)
 
-	log.Debugf("%+v", os.Args[1:])
-	parameters := []string{}
-	if len(os.Args) == 1 {
-		log.Debugf("Starting client - using defaults or config file")
-		parameters = append(parameters, "client")
-	} else {
-		log.Debugf("os.Args[0] == %s", os.Args[0])
-		for x := 1; x <= len(os.Args[1:]); x++ {
-			log.Debugf("- adding os.Args[%s]", os.Args[x])
-			parameters = append(parameters, os.Args[x])
-		}
+	fmt.Printf("Config: %+v\n", config.Config)
+	asdf := fmt.Sprintf("0.0.0.0:%s", config.Config.GRPCPort)
+	fmt.Printf("asdf: %s\n", asdf)
+
+	// listen, err := net.Listen("tcp", config.Config.GetListenAddress())
+	listen, err := net.Listen("tcp", ":4505")
+	if err != nil {
+		log.Fatalf("failed to listen on port %s, %v\n", fmt.Sprintf("0.0.0.0:%s", config.Config.GRPCPort), err)
 	}
-	log.Debugf("parameters: %s", parameters[0:])
-	if err := core.ParseParameters(parameters); err != nil {
-		fmt.Printf("%s\n", err.Error())
-		os.Exit(1)
+
+	fmt.Printf("net.Listen(\"tcp\", \"%s\")\n", config.Config.GetListenAddress())
+
+	fmt.Println(listen.Addr().String())
+	fmt.Printf("listen: %+v\n", listen)
+
+	fmt.Printf("Starting gRPC server on port %s", config.Config.GRPCPort)
+	os.Exit(0)
+	grpcServer := grpc.NewServer()
+	if err := grpcServer.Serve(listen); err != nil {
+		log.Fatalf("failed to server gRPC over port %s, %v", config.Config.GRPCPort, err)
+	} else {
+		fmt.Printf("Server is up and running on port %s\n", config.Config.GRPCPort)
 	}
 
 }
