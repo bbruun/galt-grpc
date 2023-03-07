@@ -25,7 +25,7 @@ func (c *GlobalConfiguration) GetListenAddress() string {
 
 var Config GlobalConfiguration
 
-func NewConfig(location string) *GlobalConfiguration {
+func NewConfig(location string) GlobalConfiguration {
 	if _, err := os.Stat(location); err != nil {
 		log.Fatalf("configuration file \"%s\" file found: %v\n", location, err)
 	}
@@ -35,14 +35,14 @@ func NewConfig(location string) *GlobalConfiguration {
 	}
 	c := GlobalConfiguration{}
 	yaml.Unmarshal(yf, &c)
-
-	Config = c
+	fmt.Printf("c: %+v\n", c)
+	// Config = &c
 	// fmt.Printf("Config created: %+v\n", Config)
-	return &c
+	return c
 }
 
 func (c *GlobalConfiguration) UpdateConfigFromEnvVars() {
-	asdf := os.Getenv("PORT")
+	asdf := os.Getenv("GRPCPORT")
 	if asdf != "" {
 		Config.GRPCPort = asdf
 	}

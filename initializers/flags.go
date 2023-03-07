@@ -8,17 +8,18 @@ import (
 var DEFAULTCONFIGFILE string = "./config/galt.yaml"
 
 var ConfigFileLocation string
+var ExitBeforeStart bool
+var DEBUG bool
 
 func ParseFlags() {
 	fmt.Println("reading parameters")
-	locationTmp := flag.String("config", DEFAULTCONFIGFILE, "Configuration file (default ./config/galt.yaml)")
-	location := string(*locationTmp)
-	fmt.Printf("configFileLocation = %s\n", location)
+	location := flag.String("config", DEFAULTCONFIGFILE, "Configuration file (default ./config/galt.yaml)")
+	debug := flag.Bool("debug", false, "Enable debug")
+	exitBeforeStart := flag.Bool("devexit", false, "Exit before starting actual gRPC server")
 	flag.Parse()
-	fmt.Println("- parameters parsed")
-	// map flags to global configurations
-	// GlobalFlags.SetConfigFileLocation(location)
-	// config.Config = config.NewConfig(location)
-	ConfigFileLocation = *locationTmp
-	fmt.Println("- ParseFlags() done")
+
+	ConfigFileLocation = *location
+	DEBUG = *debug
+	ExitBeforeStart = *exitBeforeStart
+
 }

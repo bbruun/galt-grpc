@@ -8,6 +8,7 @@ import (
 	"net"
 
 	"github.com/bbruun/galt/config"
+	"github.com/bbruun/galt/global"
 	"github.com/bbruun/galt/initializers"
 	"google.golang.org/grpc"
 )
@@ -30,7 +31,8 @@ func init() {
 	initializers.LoadEnvVariables()
 
 	// Read default configuration file or specified configuration file
-	config.NewConfig(initializers.ConfigFileLocation)
+	fmt.Printf("initializers.ConfigFileLocation: %s\n", initializers.ConfigFileLocation)
+	config.Config = config.NewConfig(initializers.ConfigFileLocation)
 	config.Config.UpdateConfigFromEnvVars()
 
 	// Connect to database and migrate/update it
@@ -39,30 +41,26 @@ func init() {
 }
 
 func main() {
+	config := config.Config
 	fmt.Printf("Galt %s\n", VERSION)
 
-	fmt.Printf("Config: %+v\n", config.Config)
-	asdf := fmt.Sprintf("0.0.0.0:%s", config.Config.GRPCPort)
-	fmt.Printf("asdf: %s\n", asdf)
-
-	// listen, err := net.Listen("tcp", config.Config.GetListenAddress())
-	listen, err := net.Listen("tcp", ":4505")
+	listen, err := net.Listen("tcp", config.GetListenAddress())
 	if err != nil {
-		log.Fatalf("failed to listen on port %s, %v\n", fmt.Sprintf("0.0.0.0:%s", config.Config.GRPCPort), err)
+		log.Fatalf("failed to listen on port %s, %v\n", fmt.Sprintf("0.0.0.0:%s", config.GRPCPort), err)
 	}
 
-	fmt.Printf("net.Listen(\"tcp\", \"%s\")\n", config.Config.GetListenAddress())
+	fmt.Printf("Starting gRPC server on port %s\n", config.GRPCPort)
+	global.Debug("asdf\n")
+	if initializers.ExitBeforeStart {
+		global.Debug("exiting before actually starting server")
+		os.Exit(0)
+	}
 
-	fmt.Println(listen.Addr().String())
-	fmt.Printf("listen: %+v\n", listen)
-
-	fmt.Printf("Starting gRPC server on port %s", config.Config.GRPCPort)
-	os.Exit(0)
 	grpcServer := grpc.NewServer()
 	if err := grpcServer.Serve(listen); err != nil {
-		log.Fatalf("failed to server gRPC over port %s, %v", config.Config.GRPCPort, err)
+		log.Fatalf("failed to server gRPC over port %s, %v", config.GRPCPort, err)
 	} else {
-		fmt.Printf("Server is up and running on port %s\n", config.Config.GRPCPort)
+		fmt.Printf("Server is up and running on port %s\n", config.GRPCPort)
 	}
 
 }
