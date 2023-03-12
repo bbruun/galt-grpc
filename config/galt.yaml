@@ -1,5 +1,0 @@
-grpcaddres: localhost
-grpcport: 4505
-keys:
-  publickey: notset
-  privatekey: notset
