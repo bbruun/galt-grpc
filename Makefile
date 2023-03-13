@@ -9,8 +9,8 @@ build:
 
 test:
 	echo "Testing /minion.MinionService/RegisterMinion"
-	echo '{"name":"minion1"}' | grpc-client-cli --insecure --address localhost:4505 --service minion.MinionService --method RegisterMinion
-	echo '{"name":"minion2"}' | grpc-client-cli --insecure --address localhost:4505 --service minion.MinionService --method RegisterMinion
+	echo '{"name":"minion1"}' | grpc-client-cli --insecure --address localhost:4505 --service minion.MinionService --method RegisterNewMinion
+	echo '{"name":"minion2"}' | grpc-client-cli --insecure --address localhost:4505 --service minion.MinionService --method RegisterNewMinion
 	echo '{"readytoreceive":false,"result":"","success":false}' | grpc-client-cli --insecure --address localhost:4505 --service minion.MinionService --method GetCommands
 
 run: build

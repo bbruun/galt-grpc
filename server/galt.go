@@ -3,6 +3,7 @@ package server
 import (
 	"log"
 	"os"
+	"sync"
 
 	"gopkg.in/yaml.v2"
 )
@@ -38,4 +39,10 @@ func NewGaltServerConfig() *GaltServerConfig {
 
 func StartServer() {
 	log.Printf("Starting Salt sever")
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go gRPCServer(wg)
+	log.Printf("... server started and is ready to server")
+	wg.Wait()
+
 }
