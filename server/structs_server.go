@@ -1,15 +1,18 @@
 package server
 
+import (
+	"fmt"
+)
+
 type GaltServerConfig struct {
 	ConfigFileLocation string `yaml:"config_file_location"`
 	ReadyToStart       bool   `yaml:"ready_to_start"`
 	Server             struct {
-		Port int
+		Listen string
+		Port   int
 	} `yaml:"server"`
-	Logger struct {
-		LogLevel  string `yaml:"logLevel"`
-		Directory string `yaml:"directory"`
-		Filename  string `yaml:"filename"`
-		Format    string `yaml:"format"`
-	} `yaml:"logging"`
+}
+
+func (g *GaltServerConfig) GetListenAddress() string {
+	return fmt.Sprintf("%s:%d", g.Server.Listen, g.Server.Port)
 }

@@ -32,7 +32,12 @@ go get google.golang.org/protobuf
 go get github.com/golang/protobuf/protoc-gen-go
 go install github.com/golang/protobuf/protoc-gen-go
 go get github.com/golang/protobuf/protoc-gen
+
 ``` 
+Depending on your OS and/or distribution then do the equivalant to install the `protoc` binary:
+```
+sudo apt-get install protobuf-compiler
+```
 
 
 # Galt usage

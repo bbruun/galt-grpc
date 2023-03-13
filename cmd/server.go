@@ -4,7 +4,7 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"fmt"
+	"log"
 	"strings"
 
 	"github.com/bbruun/galt/server"
@@ -25,7 +25,7 @@ var serverCmd = &cobra.Command{
 			server.ConfigFileLocations = append(server.ConfigFileLocations, configFile)
 		}
 		server.StartServer()
-		fmt.Printf("starting server")
+		log.Printf("starting server")
 	},
 }
 

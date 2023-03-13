@@ -1,7 +1,7 @@
 package server
 
 import (
-	"fmt"
+	"log"
 	"os"
 
 	"gopkg.in/yaml.v2"
@@ -14,25 +14,28 @@ var (
 	ConfigFileLocations []string = []string{"/etc/galt/server.yaml", "./etc/galt/server.yaml"}
 )
 
+func init() {
+
+	log.Println("Loading Galt Server Configuration")
+}
+
 func NewGaltServerConfig() *GaltServerConfig {
 	c := GaltServerConfig{}
 	for x := range ConfigFileLocations {
 		if _, err := os.Stat(ConfigFileLocations[x]); err != nil {
 			continue
 		}
-
+		log.Println("server.yaml loaded, parsing")
 		lf, err := os.ReadFile(ConfigFileLocations[x])
 		if err != nil {
-			fmt.Printf("Faild to load configuration file \"%s\": %s\n", ConfigFileLocations[x], err)
+			log.Printf("Faild to load configuration file \"%s\": %s\n", ConfigFileLocations[x], err)
 			os.Exit(1)
 		}
-
 		yaml.Unmarshal(lf, &c)
-		fmt.Printf("Server configuration loaded: %+v\n", c)
 	}
-
 	return &c
 }
+
 func StartServer() {
-	fmt.Printf("Starting Salt sever")
+	log.Printf("Starting Salt sever")
 }
