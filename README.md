@@ -4,10 +4,10 @@ A sortof rewrite of SaltStack in Go using gPRC and only one port (4505/tcp).
 
 The main reason for writing this is to get to know Golang better but also to see if the SaltStack (though very powerfull) can be sped up as it is very slow on larger installations.
 
-The idea behind it is to 
+The idea behind it is to
 
-* have one binary to run it all aka server, minion and salt master cli + config files 
-* try to implement/extend a templating system that kinda resembels jinja, though most likely only to a certain degree 
+* have one binary to run it all aka server, minion and salt master cli + config files
+* try to implement/extend a templating system that kinda resembels jinja, though most likely only to a certain degree
 * implement user controll so the `galt` utility can be run with limitations by non-root users on the minions (managed servers) without compromising security
 * have an easy way to extend using spf13/cobalt to add eg salt-cloud, switch configuration functionality etc. etc.
 
@@ -17,7 +17,7 @@ I've been using BASH, Python, C/C++ since '98 when I switched to GNU/Linux and w
 # Rquirements
 
 * Golang 1.19+
-* Golang Cobra 
+* Golang Cobra
 * Golang gRPC
 
 # Development environment requirements
@@ -33,7 +33,7 @@ go get github.com/golang/protobuf/protoc-gen-go
 go install github.com/golang/protobuf/protoc-gen-go
 go get github.com/golang/protobuf/protoc-gen
 
-``` 
+```
 Depending on your OS and/or distribution then do the equivalant to install the `protoc` binary:
 ```
 sudo apt-get install protobuf-compiler
@@ -46,16 +46,24 @@ sudo apt-get install protobuf-compiler
 
 `galt server [options]`
 
-## Run the client 
+## Run the client
 
 `galt client [options]`
 
-## Run a galt command 
+## Run a galt command
 
-`galt <command...>` 
+`galt <command...>`
 eg
 `galt "*" cmd.run ' ls -l '`
 
 (I've yet to determine how to implement states - that will be a nice mental workout)
 
 
+# Example usage
+
+// WORK IN PROGRESS - NOTHING IS WORKGING YET //
+
+Example: Run "ls -l" on all servers named "*jms*"
+```
+galt -m "*jms*" cmd.run "ls -l"
+```
