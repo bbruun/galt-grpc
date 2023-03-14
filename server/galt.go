@@ -26,7 +26,6 @@ func NewGaltServerConfig() *GaltServerConfig {
 		if _, err := os.Stat(ConfigFileLocations[x]); err != nil {
 			continue
 		}
-		log.Println("server.yaml loaded, parsing")
 		lf, err := os.ReadFile(ConfigFileLocations[x])
 		if err != nil {
 			log.Printf("Faild to load configuration file \"%s\": %s\n", ConfigFileLocations[x], err)
@@ -38,6 +37,7 @@ func NewGaltServerConfig() *GaltServerConfig {
 }
 
 func StartServer() {
+	// TODO: add foreground/background feature to StartServer
 	log.Printf("Starting Salt sever")
 	var wg sync.WaitGroup
 	wg.Add(1)

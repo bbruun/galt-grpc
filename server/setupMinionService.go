@@ -31,7 +31,13 @@ func (m *myMinionServer) RegisterNewMinion(ctx context.Context, input *minion.Cr
 
 }
 
-func (s myMinionServer) GetCommands(srv minion.MinionService_GetCommandsServer) error {
+func (s *myMinionServer) CmdRun(ctx context.Context, cmdRunSend *minion.CmdRunSend) (*minion.CmdRunResult, error) {
+	log.Printf("CmdRun: received: %+v\n", cmdRunSend)
+	//TODO: Send this to all minions that match the list in the CmdRunSend.Minions string
+	return &minion.CmdRunResult{}, nil
+}
+
+func (s *myMinionServer) GetCommands(srv minion.MinionService_GetCommandsServer) error {
 	//ctx := stream.Context()
 
 	done := make(chan bool)

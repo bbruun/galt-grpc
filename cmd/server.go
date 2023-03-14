@@ -24,6 +24,7 @@ var serverCmd = &cobra.Command{
 		if configFile != "" {
 			server.ConfigFileLocations = append(server.ConfigFileLocations, configFile)
 		}
+
 		server.StartServer()
 		log.Printf("starting server")
 	},
