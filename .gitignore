@@ -1,4 +1,4 @@
 .*swp
 **/.swp
-galt
-.env
+./galt
+./.env
