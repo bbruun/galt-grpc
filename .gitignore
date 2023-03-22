@@ -1,4 +1,9 @@
+.env
 .*swp
 **/.swp
 ./galt
 ./.env
+etc/galt/server.yaml
+etc/galt/logger.yaml
+etc/galt/client.yaml
+galt

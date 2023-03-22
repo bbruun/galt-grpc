@@ -23,10 +23,10 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MinionServiceClient interface {
 	// This one is just for testing
-	// rpc Create (CreateMinion) returns (MinionCreateResponse) {}
+	// rpc Create (CreateMinion) returns (MinionCreateResponse) {};
 	RegisterNewMinion(ctx context.Context, in *CreateMinion, opts ...grpc.CallOption) (*MinionCreateResponse, error)
-	GetCommands(ctx context.Context, opts ...grpc.CallOption) (MinionService_GetCommandsClient, error)
-	CmdRun(ctx context.Context, in *CmdRunSend, opts ...grpc.CallOption) (*CmdRunResult, error)
+	GetCommands(ctx context.Context, in *CommandFromMinion, opts ...grpc.CallOption) (MinionService_GetCommandsClient, error)
+	CmdRun(ctx context.Context, in *CmdRunFromClient, opts ...grpc.CallOption) (MinionService_CmdRunClient, error)
 }
 
 type minionServiceClient struct {
@@ -46,18 +46,23 @@ func (c *minionServiceClient) RegisterNewMinion(ctx context.Context, in *CreateM
 	return out, nil
 }
 
-func (c *minionServiceClient) GetCommands(ctx context.Context, opts ...grpc.CallOption) (MinionService_GetCommandsClient, error) {
+func (c *minionServiceClient) GetCommands(ctx context.Context, in *CommandFromMinion, opts ...grpc.CallOption) (MinionService_GetCommandsClient, error) {
 	stream, err := c.cc.NewStream(ctx, &MinionService_ServiceDesc.Streams[0], "/minion.MinionService/GetCommands", opts...)
 	if err != nil {
 		return nil, err
 	}
 	x := &minionServiceGetCommandsClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
 	return x, nil
 }
 
 type MinionService_GetCommandsClient interface {
-	Send(*CommandFromMinion) error
-	Recv() (*CommandToMinion, error)
+	Recv() (*SendCommandToMinion, error)
 	grpc.ClientStream
 }
 
@@ -65,25 +70,44 @@ type minionServiceGetCommandsClient struct {
 	grpc.ClientStream
 }
 
-func (x *minionServiceGetCommandsClient) Send(m *CommandFromMinion) error {
-	return x.ClientStream.SendMsg(m)
-}
-
-func (x *minionServiceGetCommandsClient) Recv() (*CommandToMinion, error) {
-	m := new(CommandToMinion)
+func (x *minionServiceGetCommandsClient) Recv() (*SendCommandToMinion, error) {
+	m := new(SendCommandToMinion)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
-func (c *minionServiceClient) CmdRun(ctx context.Context, in *CmdRunSend, opts ...grpc.CallOption) (*CmdRunResult, error) {
-	out := new(CmdRunResult)
-	err := c.cc.Invoke(ctx, "/minion.MinionService/CmdRun", in, out, opts...)
+func (c *minionServiceClient) CmdRun(ctx context.Context, in *CmdRunFromClient, opts ...grpc.CallOption) (MinionService_CmdRunClient, error) {
+	stream, err := c.cc.NewStream(ctx, &MinionService_ServiceDesc.Streams[1], "/minion.MinionService/CmdRun", opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &minionServiceCmdRunClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type MinionService_CmdRunClient interface {
+	Recv() (*CmdRunReturnResultToMinion, error)
+	grpc.ClientStream
+}
+
+type minionServiceCmdRunClient struct {
+	grpc.ClientStream
+}
+
+func (x *minionServiceCmdRunClient) Recv() (*CmdRunReturnResultToMinion, error) {
+	m := new(CmdRunReturnResultToMinion)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 // MinionServiceServer is the server API for MinionService service.
@@ -91,10 +115,10 @@ func (c *minionServiceClient) CmdRun(ctx context.Context, in *CmdRunSend, opts .
 // for forward compatibility
 type MinionServiceServer interface {
 	// This one is just for testing
-	// rpc Create (CreateMinion) returns (MinionCreateResponse) {}
+	// rpc Create (CreateMinion) returns (MinionCreateResponse) {};
 	RegisterNewMinion(context.Context, *CreateMinion) (*MinionCreateResponse, error)
-	GetCommands(MinionService_GetCommandsServer) error
-	CmdRun(context.Context, *CmdRunSend) (*CmdRunResult, error)
+	GetCommands(*CommandFromMinion, MinionService_GetCommandsServer) error
+	CmdRun(*CmdRunFromClient, MinionService_CmdRunServer) error
 	mustEmbedUnimplementedMinionServiceServer()
 }
 
@@ -105,11 +129,11 @@ type UnimplementedMinionServiceServer struct {
 func (UnimplementedMinionServiceServer) RegisterNewMinion(context.Context, *CreateMinion) (*MinionCreateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RegisterNewMinion not implemented")
 }
-func (UnimplementedMinionServiceServer) GetCommands(MinionService_GetCommandsServer) error {
+func (UnimplementedMinionServiceServer) GetCommands(*CommandFromMinion, MinionService_GetCommandsServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetCommands not implemented")
 }
-func (UnimplementedMinionServiceServer) CmdRun(context.Context, *CmdRunSend) (*CmdRunResult, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CmdRun not implemented")
+func (UnimplementedMinionServiceServer) CmdRun(*CmdRunFromClient, MinionService_CmdRunServer) error {
+	return status.Errorf(codes.Unimplemented, "method CmdRun not implemented")
 }
 func (UnimplementedMinionServiceServer) mustEmbedUnimplementedMinionServiceServer() {}
 
@@ -143,12 +167,15 @@ func _MinionService_RegisterNewMinion_Handler(srv interface{}, ctx context.Conte
 }
 
 func _MinionService_GetCommands_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(MinionServiceServer).GetCommands(&minionServiceGetCommandsServer{stream})
+	m := new(CommandFromMinion)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(MinionServiceServer).GetCommands(m, &minionServiceGetCommandsServer{stream})
 }
 
 type MinionService_GetCommandsServer interface {
-	Send(*CommandToMinion) error
-	Recv() (*CommandFromMinion, error)
+	Send(*SendCommandToMinion) error
 	grpc.ServerStream
 }
 
@@ -156,34 +183,29 @@ type minionServiceGetCommandsServer struct {
 	grpc.ServerStream
 }
 
-func (x *minionServiceGetCommandsServer) Send(m *CommandToMinion) error {
+func (x *minionServiceGetCommandsServer) Send(m *SendCommandToMinion) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func (x *minionServiceGetCommandsServer) Recv() (*CommandFromMinion, error) {
-	m := new(CommandFromMinion)
-	if err := x.ServerStream.RecvMsg(m); err != nil {
-		return nil, err
+func _MinionService_CmdRun_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(CmdRunFromClient)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
 	}
-	return m, nil
+	return srv.(MinionServiceServer).CmdRun(m, &minionServiceCmdRunServer{stream})
 }
 
-func _MinionService_CmdRun_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CmdRunSend)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MinionServiceServer).CmdRun(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/minion.MinionService/CmdRun",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MinionServiceServer).CmdRun(ctx, req.(*CmdRunSend))
-	}
-	return interceptor(ctx, in, info, handler)
+type MinionService_CmdRunServer interface {
+	Send(*CmdRunReturnResultToMinion) error
+	grpc.ServerStream
+}
+
+type minionServiceCmdRunServer struct {
+	grpc.ServerStream
+}
+
+func (x *minionServiceCmdRunServer) Send(m *CmdRunReturnResultToMinion) error {
+	return x.ServerStream.SendMsg(m)
 }
 
 // MinionService_ServiceDesc is the grpc.ServiceDesc for MinionService service.
@@ -197,17 +219,17 @@ var MinionService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "RegisterNewMinion",
 			Handler:    _MinionService_RegisterNewMinion_Handler,
 		},
-		{
-			MethodName: "CmdRun",
-			Handler:    _MinionService_CmdRun_Handler,
-		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "GetCommands",
 			Handler:       _MinionService_GetCommands_Handler,
 			ServerStreams: true,
-			ClientStreams: true,
+		},
+		{
+			StreamName:    "CmdRun",
+			Handler:       _MinionService_CmdRun_Handler,
+			ServerStreams: true,
 		},
 	},
 	Metadata: "proto/minion.proto",

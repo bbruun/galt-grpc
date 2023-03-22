@@ -1,0 +1,7 @@
+logLevel: debug
+directory: /var/log/galt
+filename: server.log
+format: "2006-01-02 15:04:05"
+rotation: daily
+maxcount: 10
+maxsize: 10485760

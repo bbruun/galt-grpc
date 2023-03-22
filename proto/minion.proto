@@ -2,14 +2,33 @@ syntax = "proto3";
 
 package minion;
 
-option go_package = "github.com/bbruun/bbruun/galt/proto;proto";
+option go_package = "github.com/bbruun/bbruun/galt/proto";
 
 service MinionService {
     // This one is just for testing
-    // rpc Create (CreateMinion) returns (MinionCreateResponse) {}
-    rpc RegisterNewMinion (CreateMinion) returns (MinionCreateResponse) {}
-    rpc GetCommands (stream CommandFromMinion) returns (stream CommandToMinion) {}
-    rpc CmdRun (CmdRunSend) returns (CmdRunResult) {}
+    // rpc Create (CreateMinion) returns (MinionCreateResponse) {};
+    rpc RegisterNewMinion (CreateMinion) returns (MinionCreateResponse) {};
+    rpc GetCommands (CommandFromMinion) returns (stream SendCommandToMinion) {};
+    rpc CmdRun (CmdRunFromClient) returns (stream CmdRunReturnResultToMinion) {};
+}
+
+
+message SendCommandToMinion {
+    string Time = 1;            // Time time as a string
+    bool Scheduletask = 2;      // Don't wait to execute it now
+    int64 Timeout = 3;          // to be used later
+    string CommandType = 4;     // the command type (based on structs)
+    string MessageToClient = 5;
+    string MarshaledCommand = 6;  // The marshaled struct
+}
+
+message CommandFromMinion {
+    string Name = 1;
+    string MessageFromClient = 2;
+    string MessageToClient = 3;
+    bool ReadyToReceive = 4; // True == client will accept a new command
+    string Result = 5;       // The stdout/stderr output from the client
+    bool Success = 6;        // Was the command successful
 }
 
 message CreateMinion {
@@ -17,35 +36,25 @@ message CreateMinion {
 }
 
 message MinionCreateResponse {
-    bool authenticated = 1;
-    int64 minionId = 2;
-    string registeredname = 3;
+    bool Authenticated = 1;
+    int64 MinionId = 2;
+    string RegisteredName = 3;
 }
 
-message CommandToMinion {
-    string time = 1;            // Time time as a string
-    bool scheduletask = 2;      // Don't wait to execute it now
-    int64 timeout = 3;          // to be used later
-    string commandtype = 4;     // the command type (based on structs)
-    string marshaledcommand = 5;  // The marshaled struct
-}
 
-message CommandFromMinion {
-    bool readytoreceive = 1; // True == client will accept a new command
-    string result = 2;       // The stdout/stderr output from the client
-    bool success = 3;        // Was the command successful
-}
-
-message CmdRunSend {
-    string minions = 1;         // space separated list of minions
-    string command = 2;
+message CmdRunFromClient {
+    string Name = 1;
+    string MessageFromClient = 2;
+    string MessageToClient = 3;
+    string TargetMinions = 4;
+    string Command = 5;
 
 }
 
-message CmdRunResult {
+message CmdRunReturnResultToMinion {
     repeated MinionCmdRunResult minionCmdResult = 1; //
 }
 message MinionCmdRunResult {
-    bool success = 1;           // True == the command was successful, False == the command failed
-    string result = 2;          // The stdout/stderr output from the minion that ran the command
+    bool Success = 1;           // True == the command was successful, False == the command failed
+    string Result = 2;          // The stdout/stderr output from the minion that ran the command
 }

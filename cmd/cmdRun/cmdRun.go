@@ -5,6 +5,8 @@ package cmdRun
 
 import (
 	"context"
+	"fmt"
+	"io"
 	"log"
 	"strings"
 
@@ -34,7 +36,7 @@ to quickly create a Cobra application.`,
 	},
 }
 
-func SendCmdRunCommand(minions []string, args []string) {
+func SendCmdRunCommand(minions []string, args []string) error {
 	var conn *grpc.ClientConn
 	conn, err := grpc.Dial("localhost:4505", grpc.WithInsecure())
 	if err != nil {
@@ -44,12 +46,29 @@ func SendCmdRunCommand(minions []string, args []string) {
 
 	c := proto.NewMinionServiceClient(conn)
 
-	response, err := c.CmdRun(context.Background(), &proto.CmdRunSend{Minions: strings.Join(minions, "\n"), Command: strings.Join(args, ";")})
+	response, err := c.CmdRun(context.Background(), &proto.CmdRunFromClient{
+		Name:              "callingClient",
+		MessageFromClient: "",
+		MessageToClient:   "",
+		TargetMinions:     strings.Join(minions, "\n"),
+		Command:           strings.Join(args, ";"),
+	})
 	if err != nil {
-		log.Fatalf("Error when calling SayHello: %s", err)
+		log.Fatalf("Error when creating message to Server: %s", err)
 	}
-	for x := range response.GetMinionCmdResult() {
-		log.Printf("Response from server: %s", x)
+	for {
+		resp, err := response.Recv()
+		if err == io.EOF {
+			return nil
+		} else if err == nil {
+			valStr := fmt.Sprintf("Response val: %s", resp.MinionCmdResult)
+			log.Println(valStr)
+		}
+
+		if err != nil {
+			panic(err) // dont use panic in your real project
+		}
+
 	}
 }
 
