@@ -149,6 +149,7 @@ func (s *myMinionServer) CmdRun(fromClient *proto.CmdRunFromClient, toClient pro
 		time.Sleep(2 * time.Second)
 		loopIndex -= 1
 		if loopIndex < 0 {
+			mi.IsConnected = false
 			break
 		}
 	}

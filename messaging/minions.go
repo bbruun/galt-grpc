@@ -57,5 +57,4 @@ func (m *Minions) GetMinions() []string {
 	}
 	// log.Printf("- m.GetMinions(): %s", names)
 	return names
-
 }

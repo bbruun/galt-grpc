@@ -5,6 +5,8 @@ package main
 
 import (
 	"log"
+	"strings"
+	"time"
 
 	"github.com/bbruun/galt/cli"
 	"github.com/bbruun/galt/cmd"
@@ -25,6 +27,14 @@ func init() {
 
 func main() {
 	cli.Cli = cli.NewCli()
-
+	go func() {
+		for {
+			names := mc.GetMinions()
+			if len(names) > 0 {
+				log.Printf("registered minions: %s\n", strings.Join(names, " "))
+			}
+			time.Sleep(time.Second)
+		}
+	}()
 	cmd.Execute()
 }
