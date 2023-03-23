@@ -8,10 +8,8 @@ build:
 	go build .
 
 test:
-	echo "Testing /minion.MinionService/RegisterMinion"
-	echo '{"name":"minion1"}' | grpc-client-cli --insecure --address localhost:4505 --service minion.MinionService --method RegisterNewMinion
-	echo '{"name":"minion2"}' | grpc-client-cli --insecure --address localhost:4505 --service minion.MinionService --method RegisterNewMinion
-	echo '{"readytoreceive":false,"result":"","success":false}' | grpc-client-cli --insecure --address localhost:4505 --service minion.MinionService --method GetCommands
+	echo "Testing if server returns output"
+	./galt -m "*s*" cmd.run 'ls -l '
 
 run: build
 	go run . server
