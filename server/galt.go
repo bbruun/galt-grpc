@@ -136,12 +136,15 @@ func (s *myMinionServer) CmdRun(fromClient *proto.CmdRunFromClient, toClient pro
 	command := fromClient.Command
 
 	log.Printf("CmdRun:\n- targets: %s\n- command: %s\n", targets, command)
-	// return toclient
-	loopIndex := len(targets)
+
+	//TODO: Actually run the command
+	// return output to calling client
+	loopIndex := len(targets) - 1
 	for {
 		// b := time.Now().UTC()
 
-		messageToReturn := fmt.Sprintf("This should be response from minon %d ... (depending on the order of execution and minion returns of couse)", loopIndex)
+		//TODO: return actual content from above
+		messageToReturn := fmt.Sprintf("This should be response from minon %d ... (depending on the order of execution and minion returns of couse)", loopIndex+1)
 		msg := proto.SendCommandResultToMinion{
 			MessageFromServer: messageToReturn,
 		}

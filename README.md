@@ -46,7 +46,7 @@ sudo apt-get install protobuf-compiler
 
 `galt server [options]`
 
-## Run the client
+## Run the client (not implemented yet)
 
 `galt client [options]`
 
@@ -54,9 +54,9 @@ sudo apt-get install protobuf-compiler
 
 `galt <command...>`
 eg
-`galt "*" cmd.run ' ls -l '`
+`galt -m "*" cmd.run 'ls -l '`
 
-(I've yet to determine how to implement states - that will be a nice mental workout)
+This will just return a serialized list of static content as of this writing.
 
 
 # Example usage
