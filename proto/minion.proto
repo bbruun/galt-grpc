@@ -8,24 +8,24 @@ service MinionService {
     // This one is just for testing
     // rpc Create (CreateMinion) returns (MinionCreateResponse) {};
     rpc RegisterNewMinion (CreateMinion) returns (MinionCreateResponse) {};
-    rpc GetCommands (CommandFromMinion) returns (stream SendCommandToMinion) {};
+    rpc GetCommands (CommandFromMinion) returns (stream SendCommandResultToMinion) {};
     rpc CmdRun (CmdRunFromClient) returns (stream CmdRunReturnResultToMinion) {};
 }
 
 
-message SendCommandToMinion {
+message SendCommandResultToMinion {
     string Time = 1;            // Time time as a string
     bool Scheduletask = 2;      // Don't wait to execute it now
     int64 Timeout = 3;          // to be used later
     string CommandType = 4;     // the command type (based on structs)
-    string MessageToClient = 5;
+    string MessageFromServer = 5;
     string MarshaledCommand = 6;  // The marshaled struct
 }
 
 message CommandFromMinion {
     string Name = 1;
     string MessageFromClient = 2;
-    string MessageToClient = 3;
+    string MessageFromServer = 3;
     bool ReadyToReceive = 4; // True == client will accept a new command
     string Result = 5;       // The stdout/stderr output from the client
     bool Success = 6;        // Was the command successful
@@ -45,14 +45,14 @@ message MinionCreateResponse {
 message CmdRunFromClient {
     string Name = 1;
     string MessageFromClient = 2;
-    string MessageToClient = 3;
+    string MessageFromServer = 3;
     string TargetMinions = 4;
     string Command = 5;
 
 }
 
 message CmdRunReturnResultToMinion {
-    repeated MinionCmdRunResult minionCmdResult = 1; //
+    string minionCmdResult = 1; //
 }
 message MinionCmdRunResult {
     bool Success = 1;           // True == the command was successful, False == the command failed

@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -121,23 +122,28 @@ func (s *myMinionServer) CmdRun(fromClient *proto.CmdRunFromClient, toClient pro
 	var mc *messaging.Minions = messaging.MinionStateCollector
 
 	msgch := make(chan any)
+	fmt.Printf("- got: %+v\n", fromClient)
 	mi := messaging.MinionInfo{
 		Name:                  fromClient.Name,
 		MessageFromClient:     fromClient.MessageFromClient,
-		MessageToClient:       fromClient.MessageToClient,
+		MessageFromServer:     fromClient.MessageFromServer,
 		CommunicationsChannel: msgch,
 		IsConnected:           true,
 	}
 	mc.AddMinion(&mi)
-	log.Printf("CmdRun: received: %+v\n", fromClient)
-	// return toclient
-	loopIndex := 3
-	for {
-		b := time.Now().UTC()
 
-		messageToReturn := fmt.Sprintf("The minion %s sent a cmd.run command (id:%d)", mi.Name, b.UnixNano())
-		msg := proto.SendCommandToMinion{
-			MessageToClient: messageToReturn,
+	targets := strings.Split(fromClient.TargetMinions, ", ")
+	command := fromClient.Command
+
+	log.Printf("CmdRun:\n- targets: %s\n- command: %s\n", targets, command)
+	// return toclient
+	loopIndex := len(targets)
+	for {
+		// b := time.Now().UTC()
+
+		messageToReturn := fmt.Sprintf("This should be response from minon %d ... (depending on the order of execution and minion returns of couse)", loopIndex)
+		msg := proto.SendCommandResultToMinion{
+			MessageFromServer: messageToReturn,
 		}
 
 		if err := toClient.SendMsg(&msg); err != nil {
@@ -169,22 +175,23 @@ func (s *myMinionServer) GetCommands(fromClient *proto.CommandFromMinion, toClie
 	mi := messaging.MinionInfo{
 		Name:                  fromClient.Name,
 		MessageFromClient:     fromClient.MessageFromClient,
-		MessageToClient:       fromClient.MessageToClient,
+		MessageFromServer:     fromClient.MessageFromServer,
 		CommunicationsChannel: msgch,
 		IsConnected:           true,
 	}
 	mc.AddMinion(&mi)
 
-	// return toclient
+	//TODO: process received commmand on target minions
+
+	// return results to toclient
 	for {
 		b := time.Now().UTC()
 
-		messageToReturn := fmt.Sprintf("The minion %s will see this (id:%d)", mi.Name, b.UnixNano())
-		msg := proto.SendCommandToMinion{
-			MessageToClient: messageToReturn,
+		msg := proto.SendCommandResultToMinion{
+			MessageFromServer: fmt.Sprintf("The minion %s will see this (id:%d)", mi.Name, b.UnixNano()),
 		}
 
-		if err := toClient.SendMsg(&msg); err != nil {
+		if err := toClient.SendMsg(msg); err != nil {
 			mi.IsConnected = false
 			fmt.Printf("minion %s disconected (%s)\n", mi.Name, err)
 			toClient.Context().Done()
@@ -194,50 +201,5 @@ func (s *myMinionServer) GetCommands(fromClient *proto.CommandFromMinion, toClie
 
 	}
 
-	// Read from Minion
-	// go func() {
-	// 	ctx := srv.Context()
-	// 	for {
-	// 		// exit if context is done
-	// 		// or continue
-	// 		select {
-	// 		case <-ctx.Done():
-	// 			return
-	// 		default:
-	// 		}
-	// 		req, err := srv.Recv()
-	// 		if err == io.EOF {
-	// 			// return will close stream from server side
-	// 			log.Println("client disconnected")
-	// 			return
-	// 		}
-	// 		if err != nil {
-	// 			fmt.Printf("receive error: %s\n", err)
-	// 			continue
-	// 		}
-	// 		fmt.Printf("received: %+v\n", req)
-
-	// 	}
-	// }()
-
-	// To client
-	// for {
-	// 	command := commands.CmdRun{
-	// 		Commandline: "ls -l /",
-	// 	}
-	// 	msg := minion.CommandToMinion{
-	// 		Time:             time.Now().UTC().String(),
-	// 		Scheduletask:     false,
-	// 		Commandtype:      "cmd.run",
-	// 		Marshaledcommand: command.ToString(),
-	// 		Timeout:          0,
-	// 	}
-	// 	if err := srv.SendMsg(&msg); err != nil {
-	// 		fmt.Printf("failed to send command to minion, closing server port: %s\n", err)
-	// 		srv.Context().Done()
-	// 		return fmt.Errorf("client is not connected")
-	// 	}
-	// 	time.Sleep(2 * time.Second)
-	// }
 	return nil
 }

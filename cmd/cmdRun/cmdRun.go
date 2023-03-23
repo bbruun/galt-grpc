@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/bbruun/galt/cli"
@@ -46,22 +47,27 @@ func SendCmdRunCommand(minions []string, args []string) error {
 
 	c := proto.NewMinionServiceClient(conn)
 
+	hostname, _ := os.Hostname()
 	response, err := c.CmdRun(context.Background(), &proto.CmdRunFromClient{
-		Name:              "callingClient",
+		Name:              hostname,
 		MessageFromClient: "",
-		MessageToClient:   "",
-		TargetMinions:     strings.Join(minions, "\n"),
+		MessageFromServer: "",
+		TargetMinions:     strings.Join(minions, ", "),
 		Command:           strings.Join(args, ";"),
 	})
 	if err != nil {
 		log.Fatalf("Error when creating message to Server: %s", err)
 	}
+	fmt.Println("command sent to Galt master")
+
 	for {
-		resp, err := response.Recv()
+		// resp, err := response.Recv()
+		msg := proto.SendCommandResultToMinion{}
+		err := response.RecvMsg(&msg)
 		if err == io.EOF {
 			return nil
 		} else if err == nil {
-			valStr := fmt.Sprintf("Response val: %s", resp.MinionCmdResult)
+			valStr := fmt.Sprintf("Response val: %s", msg.MessageFromServer)
 			log.Println(valStr)
 		}
 

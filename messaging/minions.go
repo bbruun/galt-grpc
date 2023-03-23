@@ -9,7 +9,7 @@ var MinionStateCollector *Minions
 type MinionInfo struct {
 	Name                  string   `json:"name"`
 	MessageFromClient     string   `json:"message_from_client"`
-	MessageToClient       string   `json:"message_to_client"`
+	MessageFromServer     string   `json:"message_to_client"`
 	CommunicationsChannel chan any `json:"-"`
 	TriggerServer         bool     `json:"trigger_server"`
 	TriggerClient         bool     `json:"trigger_client"`
